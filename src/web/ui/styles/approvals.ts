@@ -11,10 +11,15 @@ export const APPROVALS_CSS = `
 .req-body{min-width:0;display:flex;flex-direction:column}
 .req .ap-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.1rem .6rem;font-size:.85rem;line-height:1.5}
 .req .ap-meta > *{display:inline;margin:0;white-space:nowrap}
+.req .ap-meta > .req-foot{white-space:normal;overflow-wrap:anywhere}
+.req-row .req-title{margin:0}
+.req-row .req-title + .ap-meta{margin-top:.2rem}
+.req-soon{color:var(--warn);font-weight:600}
 .req .ap-meta .badge{float:none;margin:0}
 .req-title{display:block;font-size:1.02rem;line-height:1.4;margin:.2rem 0 0;font-weight:600;overflow-wrap:anywhere}
 .req-reason{display:block;margin:.35rem 0 0;padding-left:.75rem;border-left:2px solid var(--line);font-size:.9rem}
 .req-foot{display:block;margin:.3rem 0 0;font-size:.82rem}
+.req .ap-meta > .req-foot{margin:0}
 .req-review{opacity:0;font-size:.82rem;font-weight:500;padding:.3rem .75rem;border-radius:8px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;transition:opacity .15s}
 .req-row:hover .req-review,.req-row:focus-visible .req-review{opacity:1}
 .req-icon{display:inline-flex;flex:none}
