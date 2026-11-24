@@ -64,6 +64,12 @@ table.act-table tbody tr.day:first-child th{padding-top:.6rem!important}
 .act-details summary{display:inline-flex;align-items:center;gap:.25rem;color:var(--muted);width:fit-content;list-style:none}
 .act-details summary::-webkit-details-marker{display:none}
 .act-details summary:hover{color:var(--text)}
+/* Touch: Details and a chip's x get a 44px hit area without moving anything. */
+@media (pointer:coarse){
+  .act-details summary,.act-chip-filter a{position:relative}
+  .act-details summary::after{content:"";position:absolute;inset:-.8rem -.5rem}
+  .act-chip-filter a::after{content:"";position:absolute;inset:-.7rem}
+}
 .act-details .chev{width:.9rem;height:.9rem;transition:transform .15s}
 .act-details[open] > summary .chev{transform:rotate(180deg)}
 .act-details dl.facts{margin:.5rem 0 .25rem;grid-template-columns:minmax(5rem,max-content) 1fr}

@@ -339,7 +339,7 @@ main:has(.auth){max-width:none;padding:0}
 .signin-status-icon{flex:none;display:inline-flex;color:var(--danger);margin-top:.12rem}
 .signin-status-icon svg{width:1rem;height:1rem}
 .signin-help{font-size:.86rem}
-.signin-help summary{color:var(--muted);list-style:none;width:fit-content}
+.signin-help summary{color:var(--muted);list-style:none;width:fit-content;padding:.75rem 0;margin:-.75rem 0}
 .signin-help summary::-webkit-details-marker{display:none}
 .signin-help summary:hover{color:var(--text);text-decoration:underline;text-underline-offset:.2em}
 .signin-help p{margin:.4rem 0 0}
