@@ -164,6 +164,48 @@ describe("Modes", () => {
   });
 });
 
+describe("tap targets on a touch screen", () => {
+  const SMALL: readonly [string, string][] = [
+    ["/pause-control/paused", ".ui-switch[role=switch]"],
+    ["/pause-control/pending", ".pause-everything .btn"],
+    ["/modes/mixed", "button.seg-item"],
+    ["/modes/mixed", ".set-fold > summary"],
+    ["/people/admin", ".set-menu > summary"],
+    ["/agents/busy", ".row-manage > summary"],
+    ["/grants/busy", ".how-fold > summary"],
+    ["/grants/busy", ".cell-actions .btn"],
+    ["/rules/loaded", ".rule-remove"],
+    ["/rule-history/busy", ".fold > summary"],
+    ["/devices/several", ".settings-row-foot .btn"],
+  ];
+
+  it.each(SMALL)("%s: %s takes a tap 22px from its centre", async (path, selector) => {
+    const page = await open(path, 390);
+    try {
+      const control = page.locator(selector).first();
+      await control.scrollIntoViewIfNeeded();
+      const misses = await control.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        const x = box.left + box.width / 2;
+        const y = box.top + box.height / 2;
+        return [
+          [x, y - 21],
+          [x, y + 21],
+          [box.left + Math.min(box.width, 44) / 2 - 21, y],
+        ]
+          .filter(([px, py]) => {
+            const hit = document.elementFromPoint(px ?? 0, py ?? 0);
+            return !(hit !== null && (hit === el || el.contains(hit)));
+          })
+          .map(([px, py]) => `${String(Math.round(px ?? 0))},${String(Math.round(py ?? 0))}`);
+      });
+      expect(misses).toEqual([]);
+    } finally {
+      await page.context().close();
+    }
+  });
+});
+
 describe("menus inside a dialog", () => {
   it("opens a dialog's last menu where the dialog doesn't cut it off", async () => {
     for (const [path, dialog] of [

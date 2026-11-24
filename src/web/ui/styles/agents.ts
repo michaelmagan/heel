@@ -52,4 +52,9 @@ table.rows-table td{vertical-align:middle}
   table.rows-table td:not(:first-child):not(.cell-actions){order:2;font-size:.82rem}
   table.rows-table td.cell-actions:empty{display:none}
 }
+/* Touch: at least a 44px hit area around small controls, without moving them. */
+@media (pointer:coarse){
+  .row-manage > summary,.how-fold > summary,.cell-actions .btn,.agent-name{position:relative}
+  .row-manage > summary::after,.how-fold > summary::after,.cell-actions .btn::after,.agent-name::after{content:"";position:absolute;top:50%;left:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+}
 `;

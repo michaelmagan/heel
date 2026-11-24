@@ -80,4 +80,9 @@ button.seg-item:hover{color:var(--text);background:color-mix(in srgb,var(--bg) 6
   table.modes-table tr > *{padding:0!important;border:0;height:auto!important;white-space:normal!important;overflow-wrap:anywhere}
   table.modes-table .badge{white-space:normal}
 }
+/* Touch: at least a 44px hit area around small controls, without moving them. */
+@media (pointer:coarse){
+  .ui-switch,.seg-item,.set-menu > summary,.set-fold > summary,.pause-everything .btn,.settings-row-foot .btn{position:relative}
+  .ui-switch::after,.seg-item::after,.set-menu > summary::after,.set-fold > summary::after,.pause-everything .btn::after,.settings-row-foot .btn::after{content:"";position:absolute;top:50%;left:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+}
 `;
