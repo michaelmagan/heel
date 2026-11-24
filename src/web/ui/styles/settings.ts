@@ -20,6 +20,7 @@ export const SETTINGS_CSS = `
 .pause-row-text .muted{font-size:.82rem}
 .pause-row-control{display:inline-flex;align-items:center;gap:.6rem;flex-wrap:wrap}
 .pause-row-note{font-size:.8rem}
+.pause-row-text time{white-space:nowrap}
 .settings-card{margin:0 0 1rem;padding:1rem 1.15rem;border:1px solid var(--line);border-radius:14px;background:var(--bg);box-shadow:0 1px 2px rgb(0 0 0 / .04)}
 .settings-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem 1.5rem}
 .settings-row-text{min-width:0;flex:1}

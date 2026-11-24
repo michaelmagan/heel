@@ -219,6 +219,26 @@ describe("Agents", () => {
   });
 });
 
+describe("dates", () => {
+  it("never breaks a date across two lines", async () => {
+    for (const path of ["/pause-control/long-names", "/standing-approvals/long-names"]) {
+      for (const width of PHONES) {
+        const page = await open(path, width);
+        try {
+          const broken = await page.evaluate(() =>
+            [...document.querySelectorAll("main time")]
+              .filter((t) => t.getClientRects().length > 1)
+              .map((t) => t.textContent),
+          );
+          expect(broken, `${path} at ${String(width)}`).toEqual([]);
+        } finally {
+          await page.context().close();
+        }
+      }
+    }
+  });
+});
+
 describe("tap targets on a touch screen", () => {
   const SMALL: readonly [string, string][] = [
     ["/pause-control/paused", ".ui-switch[role=switch]"],

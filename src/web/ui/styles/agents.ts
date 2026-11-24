@@ -23,6 +23,7 @@ export const AGENTS_CSS = `
 table.rows-table td{vertical-align:middle}
 .cell-sub{display:block;color:var(--muted);font-size:.8rem;margin-top:.1rem;overflow-wrap:anywhere}
 .cell-code{font-size:.82rem;overflow-wrap:anywhere}
+.cell-sub time{white-space:nowrap}
 .cell-actions{width:1%;white-space:nowrap;text-align:right}
 .cell-actions form{display:inline;margin:0}
 .agent-name{font-weight:600;color:var(--text);text-decoration:none;font-family:ui-monospace,"Geist Mono",SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem}
