@@ -203,6 +203,23 @@ function contrast(el: Locator): Promise<number> {
 }
 
 describe("Agents", () => {
+  it("fits an agent's manage menu on a phone, even for a 64-character name", async () => {
+    for (const path of ["/agents/busy", "/agents/long-names"]) {
+      for (const width of PHONES) {
+        const page = await open(path, width);
+        try {
+          await page.locator(".row-manage > summary").first().click();
+          const panel = page.locator(".row-manage[open] .row-manage-panel");
+          expect(await clipped(panel), `${path} at ${String(width)}`).toEqual([]);
+          expect(await panel.evaluate((el) => el.scrollWidth - el.clientWidth)).toBe(0);
+          expect(await sideways(page)).toBe(0);
+        } finally {
+          await page.context().close();
+        }
+      }
+    }
+  });
+
   it("keeps a revoked agent's details readable in both themes", async () => {
     for (const theme of ["light", "dark"]) {
       const page = await open("/agents/busy", 1280, theme);

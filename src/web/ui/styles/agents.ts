@@ -33,12 +33,15 @@ table.rows-table td{vertical-align:middle}
 .row-manage{position:relative;display:inline-block;text-align:left}
 .row-manage > summary{list-style:none}
 .row-manage > summary::-webkit-details-marker{display:none}
-.row-manage-panel{position:absolute;right:0;top:calc(100% + .35rem);z-index:6;width:min(22rem,calc(100vw - 2rem));padding:1rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);box-shadow:0 12px 32px -12px rgb(0 0 0 / .3);white-space:normal;display:grid;gap:.6rem}
-.row-manage-panel form{display:grid;gap:.4rem}
+.row-manage-panel{position:absolute;right:0;top:calc(100% + .35rem);z-index:6;width:min(22rem,calc(100vw - 3rem));padding:1rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);box-shadow:0 12px 32px -12px rgb(0 0 0 / .3);white-space:normal;display:grid;grid-template-columns:minmax(0,1fr);gap:.6rem}
+.row-manage-panel form{display:grid;grid-template-columns:minmax(0,1fr);gap:.4rem}
+.row-manage-panel code{min-width:0;overflow-wrap:anywhere}
+.row-manage-panel .btn{height:auto!important;min-height:2.25rem;white-space:normal!important;overflow-wrap:anywhere}
 .row-manage-panel h3{margin:.25rem 0 0;font-size:.88rem}
 .row-manage-panel p{margin:0;font-size:.82rem}
 .row-manage-panel .workdirs{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}
 .row-manage-panel .workdirs li{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.row-manage-panel .workdirs li > form{flex:none}
 .table-scroll:has(.row-manage[open]){overflow:visible}
 @media (max-width:36rem){
   .page-head{flex-direction:column;gap:.5rem}
