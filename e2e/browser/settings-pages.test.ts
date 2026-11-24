@@ -30,6 +30,52 @@ const STORIES = ALL_STORIES.filter((s) => SETTINGS.has(s.component)).map(
 const PHONES = [360, 390] as const;
 const WIDTHS = [...PHONES, 768] as const;
 
+/**
+ * The browser globals the page-side callbacks use. heel's TypeScript has no
+ * DOM lib, so each callback casts `globalThis` to this (a cast only: the
+ * callbacks run in the page, where these exist).
+ */
+interface Box {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+interface El {
+  tagName: string;
+  className: string;
+  textContent: string | null;
+  parentElement: El | null;
+  getBoundingClientRect(): Box;
+  getClientRects(): { length: number };
+  contains(other: El): boolean;
+}
+interface Paint {
+  fillStyle: string;
+  clearRect(x: number, y: number, w: number, h: number): void;
+  fillRect(x: number, y: number, w: number, h: number): void;
+  getImageData(x: number, y: number, w: number, h: number): { data: Iterable<number> };
+}
+interface Win {
+  innerWidth: number;
+  getComputedStyle(el: El): {
+    overflowX: string;
+    overflowY: string;
+    padding: string;
+    backgroundColor: string;
+    color: string;
+    opacity: string;
+  };
+  document: {
+    documentElement: { scrollWidth: number };
+    querySelectorAll(selector: string): Iterable<El>;
+    elementFromPoint(x: number, y: number): El | null;
+    createElement(tag: "canvas"): { getContext(kind: "2d"): Paint | null };
+  };
+}
+
 let server: Server;
 let origin: string;
 let browser: Browser;
@@ -59,17 +105,21 @@ async function open(path: string, width: number, theme = "light"): Promise<Page>
 
 /** How far the page scrolls sideways: 0 when it fits. */
 function sideways(page: Page): Promise<number> {
-  return page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  return page.evaluate(() => {
+    const w = globalThis as unknown as Win;
+    return w.document.documentElement.scrollWidth - w.innerWidth;
+  });
 }
 
 /** Where `el` is cut off: by the viewport's sides, or by an ancestor that clips its overflow. */
 function clipped(el: Locator): Promise<string[]> {
   return el.evaluate((node) => {
+    const w = globalThis as unknown as Win;
     const box = node.getBoundingClientRect();
     const out: string[] = [];
-    if (box.left < -1 || box.right > window.innerWidth + 1) out.push("off the side of the screen");
-    for (let p = node.parentElement; p; p = p.parentElement) {
-      const style = getComputedStyle(p);
+    if (box.left < -1 || box.right > w.innerWidth + 1) out.push("off the side of the screen");
+    for (let p = (node as unknown as El).parentElement; p; p = p.parentElement) {
+      const style = w.getComputedStyle(p);
       if (style.overflowX === "visible" && style.overflowY === "visible") continue;
       const outer = p.getBoundingClientRect();
       if (
@@ -131,11 +181,12 @@ describe("People", () => {
   it("pads each stacked person row once, not again in every cell", async () => {
     const page = await open("/people/admin", 390);
     try {
-      const pads = await page.evaluate(() =>
-        [...document.querySelectorAll("table.person-table tbody tr > *")].map(
-          (cell) => getComputedStyle(cell).padding,
-        ),
-      );
+      const pads = await page.evaluate(() => {
+        const w = globalThis as unknown as Win;
+        return [...w.document.querySelectorAll("table.person-table tbody tr > *")].map(
+          (cell) => w.getComputedStyle(cell).padding,
+        );
+      });
       expect(new Set(pads)).toEqual(new Set(["0px"]));
     } finally {
       await page.context().close();
@@ -180,8 +231,10 @@ describe("Modes", () => {
 
 /** The contrast ratio of `el`'s text against the first opaque background behind it, after opacity. */
 function contrast(el: Locator): Promise<number> {
-  return el.evaluate((node) => {
-    const ctx = document.createElement("canvas").getContext("2d");
+  return el.evaluate((target) => {
+    const w = globalThis as unknown as Win;
+    const node = target as unknown as El;
+    const ctx = w.document.createElement("canvas").getContext("2d");
     if (ctx === null) throw new Error("no canvas");
     const rgba = (value: string): number[] => {
       ctx.clearRect(0, 0, 1, 1);
@@ -190,18 +243,18 @@ function contrast(el: Locator): Promise<number> {
       return [...ctx.getImageData(0, 0, 1, 1).data];
     };
     let bg = [255, 255, 255];
-    for (let p: Element | null = node; p; p = p.parentElement) {
-      const c = rgba(getComputedStyle(p).backgroundColor);
+    for (let p: El | null = node; p; p = p.parentElement) {
+      const c = rgba(w.getComputedStyle(p).backgroundColor);
       if ((c[3] ?? 0) === 255) {
         bg = c.slice(0, 3);
         break;
       }
     }
     let alpha = 1;
-    for (let p: Element | null = node; p; p = p.parentElement) {
-      alpha *= Number(getComputedStyle(p).opacity);
+    for (let p: El | null = node; p; p = p.parentElement) {
+      alpha *= Number(w.getComputedStyle(p).opacity);
     }
-    const fg = rgba(getComputedStyle(node).color);
+    const fg = rgba(w.getComputedStyle(node).color);
     alpha *= (fg[3] ?? 255) / 255;
     const mixed = bg.map((b, i) => (fg[i] ?? 0) * alpha + b * (1 - alpha));
     const lum = (c: number[]) => {
@@ -257,7 +310,7 @@ describe("dates", () => {
         const page = await open(path, width);
         try {
           const broken = await page.evaluate(() =>
-            [...document.querySelectorAll("main time")]
+            [...(globalThis as unknown as Win).document.querySelectorAll("main time")]
               .filter((t) => t.getClientRects().length > 1)
               .map((t) => t.textContent),
           );
@@ -290,7 +343,9 @@ describe("tap targets on a touch screen", () => {
     try {
       const control = page.locator(selector).first();
       await control.scrollIntoViewIfNeeded();
-      const misses = await control.evaluate((el) => {
+      const misses = await control.evaluate((target) => {
+        const w = globalThis as unknown as Win;
+        const el = target as unknown as El;
         const box = el.getBoundingClientRect();
         const x = box.left + box.width / 2;
         const y = box.top + box.height / 2;
@@ -300,7 +355,7 @@ describe("tap targets on a touch screen", () => {
           [box.left + Math.min(box.width, 44) / 2 - 21, y],
         ]
           .filter(([px, py]) => {
-            const hit = document.elementFromPoint(px ?? 0, py ?? 0);
+            const hit = w.document.elementFromPoint(px ?? 0, py ?? 0);
             return !(hit !== null && (hit === el || el.contains(hit)));
           })
           .map(([px, py]) => `${String(Math.round(px ?? 0))},${String(Math.round(py ?? 0))}`);
