@@ -352,7 +352,7 @@ export function activityPage(props: {
     }
     ${scrollRegion(
       "Decisions",
-      html`<table class="data act-table" id="activity" data-latest="${String(latest)}" data-today="${dayKey(now)}" data-filter="${params({})}"${props.rows.length === 0 ? html` hidden` : ""}>
+      html`<table class="data act-table" id="activity" data-latest="${String(latest)}" data-today="${dayKey(now)}" data-filter="${params({})}"${props.paged === true ? "" : html` data-live`}${props.rows.length === 0 ? html` hidden` : ""}>
         <caption class="visually-hidden">Decisions</caption>
         <thead class="visually-hidden">
           <tr>
@@ -591,13 +591,45 @@ function agentRow(
 }
 
 /**
+ * The Filter and Download panels: Escape or a click outside closes them (on
+ * a phone the filter sheet covers its own button), and opening one closes
+ * the other.
+ */
+export const ACTIVITY_PANELS_SCRIPT = `
+(() => {
+  const panels = [...document.querySelectorAll("details.act-filter, details.audit-export")];
+  for (const panel of panels) {
+    panel.addEventListener("toggle", () => {
+      if (panel.open) for (const other of panels) if (other !== panel) other.open = false;
+    });
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    for (const panel of panels) {
+      if (!panel.open) continue;
+      panel.open = false;
+      panel.querySelector("summary").focus();
+    }
+  });
+  document.addEventListener("click", (event) => {
+    for (const panel of panels) if (panel.open && !panel.contains(event.target)) panel.open = false;
+  });
+})();
+`;
+
+/**
  * The live stream: puts each row the server sends under its day's heading,
  * adding "Today" (or the day) when the newest heading is another day.
  */
-export const ACTIVITY_SCRIPT = `
+export const ACTIVITY_SCRIPT = `${ACTIVITY_PANELS_SCRIPT}
 (() => {
   const table = document.getElementById("activity");
-  if (!table || !window.EventSource) return;
+  // An older page doesn't take live rows: they belong on the newest page.
+  if (!table || !table.hasAttribute("data-live") || !window.EventSource) return;
+  const dayName = (day) =>
+    day === table.dataset.today
+      ? "Today"
+      : new Date(day + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
   const filter = table.dataset.filter;
   const source = new EventSource("/activity/stream?after=" + table.dataset.latest + (filter ? "&" + filter : ""));
   source.addEventListener("row", (event) => {
@@ -615,7 +647,7 @@ export const ACTIVITY_SCRIPT = `
       const cell = document.createElement("th");
       cell.colSpan = ${String(COLUMNS)};
       cell.scope = "colgroup";
-      cell.textContent = (day === table.dataset.today ? "Today" : day) + " ";
+      cell.textContent = dayName(day) + " ";
       const count = document.createElement("span");
       count.className = "day-count";
       count.textContent = "0";
