@@ -27,7 +27,8 @@ const SETTINGS = new Set([
 const STORIES = ALL_STORIES.filter((s) => SETTINGS.has(s.component)).map(
   (s) => `/${s.component}/${s.state}`,
 );
-const WIDTHS = [360, 390, 768] as const;
+const PHONES = [360, 390] as const;
+const WIDTHS = [...PHONES, 768] as const;
 
 let server: Server;
 let origin: string;
@@ -105,6 +106,39 @@ describe("Rules", () => {
         await triggers.last().click();
         const list = page.locator(".ui-select-content:not([hidden])");
         expect(await clipped(list)).toEqual([]);
+      } finally {
+        await page.context().close();
+      }
+    }
+  });
+});
+
+describe("People", () => {
+  it("fits long names and emails in each person's row, with no sideways scroll", async () => {
+    for (const width of PHONES) {
+      const page = await open("/people/long-names", width);
+      try {
+        const extra = await page
+          .locator(".table-scroll")
+          .evaluate((el) => el.scrollWidth - el.clientWidth);
+        expect(extra, `at ${String(width)}`).toBe(0);
+      } finally {
+        await page.context().close();
+      }
+    }
+  });
+
+  it("opens each person's menu on screen", async () => {
+    for (const width of PHONES) {
+      const page = await open("/people/admin", width);
+      try {
+        const menus = page.locator(".set-menu > summary");
+        for (let i = 0; i < (await menus.count()); i++) {
+          await menus.nth(i).click();
+          const panel = page.locator(".set-menu[open] .set-menu-panel");
+          expect(await clipped(panel), `menu ${String(i)} at ${String(width)}`).toEqual([]);
+          await menus.nth(i).click();
+        }
       } finally {
         await page.context().close();
       }

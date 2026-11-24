@@ -35,12 +35,13 @@ export const SETTINGS_CSS = `
 .set-head > div{min-width:0;flex:1}
 .set-head .btn{margin-top:.35rem}
 .person-table td,.person-table th{vertical-align:middle}
+table.person-table .person-name,table.person-table .person-meta{white-space:normal!important;overflow-wrap:anywhere}
 .person-meta{font-size:.85rem}
 .person-manage{width:3rem;text-align:right}
 .set-menu{position:relative;display:inline-block}
 .set-menu > summary{list-style:none}
 .set-menu > summary::-webkit-details-marker{display:none}
-.set-menu-panel{position:absolute;right:0;top:calc(100% + .4rem);z-index:5;width:min(24rem,calc(100vw - 2rem));padding:1rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);box-shadow:0 12px 32px -12px rgb(0 0 0 / .3);text-align:left;white-space:normal}
+.set-menu-panel{position:absolute;right:0;top:calc(100% + .4rem);z-index:5;width:min(24rem,calc(100vw - 3rem));padding:1rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);box-shadow:0 12px 32px -12px rgb(0 0 0 / .3);text-align:left;white-space:normal}
 .set-menu-title{margin:0 0 .5rem;font-weight:600}
 .set-menu-panel .stack-form,.set-menu-panel .form{margin:.5rem 0 0}
 .table-scroll:has(.set-menu[open]){overflow:visible}
@@ -48,7 +49,7 @@ export const SETTINGS_CSS = `
   table.person-table{min-width:0}
   table.person-table thead{display:none}
   table.person-table,table.person-table tbody{display:block}
-  table.person-table tr{display:grid;grid-template-columns:1fr auto;gap:.2rem .75rem;padding:.7rem .85rem;border-bottom:1px solid var(--line)}
+  table.person-table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2rem .75rem;padding:.7rem .85rem;border-bottom:1px solid var(--line)}
   table.person-table tr > *{padding:0;border:0}
   table.person-table .person-role{grid-column:1}
   table.person-table .person-meta{grid-column:1 / -1}
