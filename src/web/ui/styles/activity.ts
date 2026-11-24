@@ -20,9 +20,9 @@ export const ACTIVITY_CSS = `
 .act-option:has(input:checked){font-weight:500;background:color-mix(in srgb,var(--surface) 60%,transparent)}
 .act-option:has(input:checked) .act-option-check{visibility:visible}
 .act-filter-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:.4rem;padding-top:.5rem;border-top:1px solid var(--line)}
-.act-chip-filter{display:inline-flex;align-items:center;gap:.3rem;height:2rem;padding:0 .3rem 0 .65rem;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:.82rem;color:var(--muted)}
-.act-chip-filter strong{color:var(--text);font-weight:500}
-.act-chip-filter a{display:inline-flex;align-items:center;justify-content:center;width:1.4rem;height:1.4rem;border-radius:999px;color:var(--muted)}
+.act-chip-filter{display:inline-flex;align-items:center;gap:.3rem;min-height:2rem;max-width:100%;padding:.15rem .3rem .15rem .65rem;border:1px solid var(--line);border-radius:1rem;background:var(--bg);font-size:.82rem;color:var(--muted)}
+.act-chip-filter strong{min-width:0;color:var(--text);font-weight:500;overflow-wrap:anywhere}
+.act-chip-filter a{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.4rem;height:1.4rem;border-radius:999px;color:var(--muted)}
 .act-chip-filter a:hover{background:var(--surface);color:var(--text)}
 .act-chip-filter svg{width:.85rem;height:.85rem}
 @media (max-width:36rem){
