@@ -128,6 +128,20 @@ describe("People", () => {
     }
   });
 
+  it("pads each stacked person row once, not again in every cell", async () => {
+    const page = await open("/people/admin", 390);
+    try {
+      const pads = await page.evaluate(() =>
+        [...document.querySelectorAll("table.person-table tbody tr > *")].map(
+          (cell) => getComputedStyle(cell).padding,
+        ),
+      );
+      expect(new Set(pads)).toEqual(new Set(["0px"]));
+    } finally {
+      await page.context().close();
+    }
+  });
+
   it("opens each person's menu on screen", async () => {
     for (const width of PHONES) {
       const page = await open("/people/admin", width);

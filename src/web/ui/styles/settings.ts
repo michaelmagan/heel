@@ -35,7 +35,7 @@ export const SETTINGS_CSS = `
 .set-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .set-head > div{min-width:0;flex:1}
 .set-head .btn{margin-top:.35rem}
-.person-table td,.person-table th{vertical-align:middle}
+.person-table td,.person-table th{vertical-align:middle!important}
 table.person-table .person-name,table.person-table .person-meta{white-space:normal!important;overflow-wrap:anywhere}
 .person-meta{font-size:.85rem}
 .person-manage{width:3rem;text-align:right}
@@ -51,7 +51,7 @@ table.person-table .person-name,table.person-table .person-meta{white-space:norm
   table.person-table thead{display:none}
   table.person-table,table.person-table tbody{display:block}
   table.person-table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2rem .75rem;padding:.7rem .85rem;border-bottom:1px solid var(--line)}
-  table.person-table tr > *{padding:0;border:0}
+  table.person-table tr > *{padding:0!important;border:0;height:auto!important}
   table.person-table .person-role{grid-column:1}
   table.person-table .person-meta{grid-column:1 / -1}
   table.person-table .person-manage{grid-row:1;grid-column:2}
