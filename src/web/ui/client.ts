@@ -83,6 +83,10 @@ export function clientScript(csrfToken: string | null): string {
   // The three steps every ceremony shares.
   const run = async ({ status, start, sign, finish, extra }) => {
     const say = (text) => { if (status) status.textContent = text; };
+    if (!window.PublicKeyCredential || !navigator.credentials) {
+      say("This browser can't use passkeys. Open heel in an up-to-date Safari, Chrome, Edge or Firefox. Nothing changed.");
+      return false;
+    }
     try {
       say("Getting a passkey challenge…");
       const issued = await post(start.url, start.body);
@@ -92,10 +96,23 @@ export function clientScript(csrfToken: string | null): string {
       const result = await post(finish, { challengeId: issued.challengeId, response: signed, ...(extra || {}) });
       say(result.message || "Done.");
       if (result.next) window.location.assign(result.next);
+      return true;
     } catch (error) {
       const cancelled = error && (error.name === "NotAllowedError" || error.name === "AbortError");
       say(cancelled ? "The passkey check was cancelled. Nothing changed." : String(error.message || error) + " Nothing changed.");
+      return false;
     }
+  };
+  // A sign-in challenge is burnt by any answer, right or wrong. After a
+  // failed try the page fetches a fresh one, as a reload would, so the
+  // button works again: an app on the Home Screen has no reload button.
+  const freshSignInChallenge = async () => {
+    try {
+      const page = await (await fetch(window.location.href, { headers: { accept: "text/html" } })).text();
+      const id = /data-challenge-id="([^"]+)"/.exec(page);
+      const button = document.querySelector("button[data-heel-handler=signIn]");
+      if (id && button) button.dataset.challengeId = id[1];
+    } catch {}
   };
   const getAssertion = async (options) =>
     assertionJson(await navigator.credentials.get({ publicKey: requestOptions(options) }));
@@ -193,7 +210,7 @@ export function clientScript(csrfToken: string | null): string {
         start: { url: "/sign-in/options", body: { challengeId: binding.challengeId } },
         sign: getAssertion,
         finish: "/sign-in",
-      }),
+      }).then((done) => (done ? undefined : freshSignInChallenge())),
     enroll: ({ binding, status }) =>
       run({
         status,
