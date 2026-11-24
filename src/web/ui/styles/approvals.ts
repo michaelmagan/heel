@@ -76,7 +76,10 @@ export const APPROVALS_CSS = `
 .ap-next-action .btn{width:100%}
 .ap-next-action form{margin:0}
 
-/* The one action bar: no on the left, yes on the right, side by side at every width. */
+/* ── Shared action bar (.ap-bar), rendered by actionBar() in approval-shell.ts ──
+   Every approval page uses it: no on the left, yes on the right, side by side at
+   every width. Slots: .ap-bar-yes, .ap-bar-no; note: .ap-bar-note. On phones,
+   .ap[data-dock="pinned"] .ap-bar[data-dock] pins it to the bottom in place of the tab bar. */
 .ap-bar{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:.6rem}
 .ap-bar > span{display:flex;min-width:0}
 .ap-bar-no{order:1}
