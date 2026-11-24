@@ -109,10 +109,11 @@ const RULES = `
 .ui-select-item[aria-selected="true"] .ui-select-check{visibility:visible}
 .ui-select-item[aria-selected="true"]{font-weight:500}
 
-.ui-dialog{padding:0;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--text);width:min(30rem,calc(100vw - 2rem));max-height:calc(100vh - 2rem);box-shadow:0 24px 60px -20px rgb(0 0 0 / .45)}
+.ui-dialog{padding:0;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--text);width:min(30rem,calc(100vw - 2rem));max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);box-shadow:0 24px 60px -20px rgb(0 0 0 / .45)}
 .ui-dialog-wide{width:min(46rem,calc(100vw - 2rem))}
 .ui-dialog::backdrop{background:rgb(0 0 0 / .45);backdrop-filter:blur(2px)}
-.ui-dialog-panel{padding:1.25rem 1.25rem 1.4rem;overflow:auto;max-height:calc(100vh - 2rem)}
+.ui-dialog-panel{padding:1.25rem 1.25rem 1.4rem;overflow:auto;max-height:calc(100vh - 2rem - 2px);max-height:calc(100dvh - 2rem - 2px)}
+html:has(dialog.ui-dialog[open]){overflow:hidden}
 .ui-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.25rem}
 .ui-dialog-title{font-size:1.05rem;margin:0}
 .ui-dialog-desc{margin:0 0 1rem;font-size:.88rem}

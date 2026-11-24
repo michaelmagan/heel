@@ -133,6 +133,33 @@ describe("shell pages in a browser", () => {
     expect(await open()).toEqual([]);
   });
 
+  it("keeps a dialog inside a landscape phone and the page still behind it", async () => {
+    const { server, port } = await listen(createPreviewApp().fetch);
+    onTestFinished(close(server));
+    const context = await browser.newContext({
+      viewport: { width: 844, height: 390 },
+      hasTouch: true,
+      isMobile: true,
+    });
+    onTestFinished(() => context.close());
+    const page = await context.newPage();
+    await page.goto(`http://127.0.0.1:${port}/agents/busy?theme=light`);
+    await page.locator("button[aria-controls=add-agent-dialog]").click();
+    const open = await page.evaluate(() => {
+      const box = document.querySelector("dialog[open]")?.getBoundingClientRect();
+      return {
+        bottom: box?.bottom ?? Infinity,
+        overflow: getComputedStyle(document.documentElement).overflow,
+      };
+    });
+    expect(open.bottom).toBeLessThanOrEqual(390);
+    expect(open.overflow).toBe("hidden");
+    await page.keyboard.press("Escape");
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).toBe(
+      "visible",
+    );
+  });
+
   it("shows the passkey status above the phone tab bar", async () => {
     const { server, port } = await listen(createPreviewApp().fetch);
     onTestFinished(close(server));
