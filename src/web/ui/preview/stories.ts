@@ -18,6 +18,7 @@ import {
   type Theme,
   type Viewer,
 } from "../layout.ts";
+import { loopbackSignInPage } from "../loopback-sign-in.ts";
 import { type ModeRow, modesPage } from "../modes-page.ts";
 import { pauseControl } from "../pause-control.ts";
 import { pendingList } from "../pending-list.ts";
@@ -107,6 +108,7 @@ export const PAGES = [
   { id: "enroll", name: "Enroll" },
   { id: "connect", name: "Connect an app (OAuth)" },
   { id: "error", name: "Error pages" },
+  { id: "loopback-sign-in", name: "Google sign-in (paste back)" },
 ] as const;
 export type ComponentId = (typeof COMPONENTS)[number]["id"] | (typeof PAGES)[number]["id"];
 
@@ -1111,6 +1113,25 @@ export const PAGE_STORIES: readonly Story[] = [
     undefined,
     () => enrollPage({ kind: "invalid" }),
     null,
+  ),
+
+  // Google sign-in through the loopback redirect, pasted back
+  ...([true, false] as const).map((remote) =>
+    pageStory(
+      "loopback-sign-in",
+      remote ? "remote" : "local",
+      remote ? "heel runs on another machine: paste first" : "heel runs on this computer",
+      "Sign in with Google",
+      "connections",
+      () =>
+        loopbackSignInPage({
+          alias: "gmail-work",
+          google: "https://accounts.google.com/o/oauth2/v2/auth?client_id=preview",
+          paste: form("/connections/google/paste"),
+          state: "st_preview",
+          remote,
+        }),
+    ),
   ),
 
   // Error pages (signed out or not, they show the same page)

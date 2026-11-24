@@ -80,7 +80,7 @@ describe("shell pages in a browser", () => {
         const page = await phone(width, theme);
         for (const story of SHELL_STORIES) {
           await page.goto(`http://127.0.0.1:${port}/${story}?theme=${theme}`);
-          const scroll = await page.evaluate(() => document.documentElement.scrollWidth);
+          const scroll = await page.evaluate<number>("document.documentElement.scrollWidth");
           if (scroll > width) wide.push(`${story} ${theme} at ${width}: ${scroll}px`);
         }
       }
@@ -93,18 +93,16 @@ describe("shell pages in a browser", () => {
     onTestFinished(close(server));
     const page = await phone(390);
     await page.goto(`http://127.0.0.1:${port}/activity/busy?theme=light`);
-    const cells = await page.evaluate(() => {
+    // Strings, not functions: this file is typed for Node, without the DOM.
+    const cells = await page.evaluate<{ padding: string; gap: number }>(`(() => {
       const row = document.querySelector("#activity tr[data-id]");
-      const kind = row?.querySelector(".act-kind");
-      const what = row?.querySelector(".act-what");
+      const kind = row.querySelector(".act-kind");
+      const what = row.querySelector(".act-what");
       return {
-        padding: kind ? getComputedStyle(kind).padding : "",
-        gap:
-          kind && what
-            ? what.getBoundingClientRect().top - kind.getBoundingClientRect().bottom
-            : -1,
+        padding: getComputedStyle(kind).padding,
+        gap: what.getBoundingClientRect().top - kind.getBoundingClientRect().bottom,
       };
-    });
+    })()`);
     expect(cells.padding).toBe("0px");
     expect(cells.gap).toBeLessThan(8);
   });
@@ -115,17 +113,15 @@ describe("shell pages in a browser", () => {
     const page = await phone(360);
     await page.goto(`http://127.0.0.1:${port}/activity/busy?theme=light`);
     const open = () =>
-      page.evaluate(() =>
-        [...document.querySelectorAll("details.act-filter, details.audit-export")]
-          .filter((d) => (d as HTMLDetailsElement).open)
-          .map((d) => d.className),
+      page.evaluate<string[]>(
+        `[...document.querySelectorAll("details.act-filter, details.audit-export")].filter((d) => d.open).map((d) => d.className)`,
       );
     await page.locator(".act-filter > summary").click();
     await page.locator(".act-option").nth(1).click();
     expect(await open()).toEqual(["act-filter"]);
     await page.keyboard.press("Escape");
     expect(await open()).toEqual([]);
-    expect(await page.evaluate(() => document.activeElement?.closest("details")?.className)).toBe(
+    expect(await page.evaluate<string>('document.activeElement.closest("details").className')).toBe(
       "act-filter",
     );
     await page.locator(".audit-export > summary").click();
@@ -145,17 +141,14 @@ describe("shell pages in a browser", () => {
     const page = await context.newPage();
     await page.goto(`http://127.0.0.1:${port}/agents/busy?theme=light`);
     await page.locator("button[aria-controls=add-agent-dialog]").click();
-    const open = await page.evaluate(() => {
-      const box = document.querySelector("dialog[open]")?.getBoundingClientRect();
-      return {
-        bottom: box?.bottom ?? Infinity,
-        overflow: getComputedStyle(document.documentElement).overflow,
-      };
-    });
+    const open = await page.evaluate<{ bottom: number; overflow: string }>(`({
+      bottom: document.querySelector("dialog[open]").getBoundingClientRect().bottom,
+      overflow: getComputedStyle(document.documentElement).overflow,
+    })`);
     expect(open.bottom).toBeLessThanOrEqual(390);
     expect(open.overflow).toBe("hidden");
     await page.keyboard.press("Escape");
-    expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).toBe(
+    expect(await page.evaluate<string>("getComputedStyle(document.documentElement).overflow")).toBe(
       "visible",
     );
   });
@@ -165,15 +158,14 @@ describe("shell pages in a browser", () => {
     onTestFinished(close(server));
     const page = await phone(390);
     await page.goto(`http://127.0.0.1:${port}/activity/busy?theme=light`);
-    const box = await page.evaluate(() => {
+    const box = await page.evaluate<{ status: number; nav: number }>(`(() => {
       const status = document.getElementById("heel-ceremony-status");
-      if (status) status.textContent = "Waiting for your passkey…";
-      const nav = document.querySelector(".site nav");
+      status.textContent = "Waiting for your passkey…";
       return {
-        status: status?.getBoundingClientRect().bottom ?? 0,
-        nav: nav?.getBoundingClientRect().top ?? 0,
+        status: status.getBoundingClientRect().bottom,
+        nav: document.querySelector(".site nav").getBoundingClientRect().top,
       };
-    });
+    })()`);
     expect(box.status).toBeLessThanOrEqual(box.nav);
   });
 
@@ -253,7 +245,7 @@ describe("shell pages in a browser", () => {
     const bare = await browser.newPage();
     onTestFinished(() => bare.close());
     await bare.addInitScript(() => {
-      Object.defineProperty(window, "PublicKeyCredential", { value: undefined });
+      Object.defineProperty(globalThis, "PublicKeyCredential", { value: undefined });
     });
     await bare.goto(`${publicUrl.origin}/sign-in`);
     await bare.getByRole("button", { name: "Sign in with a passkey" }).click();
