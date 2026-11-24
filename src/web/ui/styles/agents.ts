@@ -21,6 +21,8 @@ export const AGENTS_CSS = `
 .ui-dialog .grant-form label{margin-top:.35rem}
 .ui-dialog select{width:100%}
 .ui-dialog .ui-select{display:flex}
+.ui-dialog .ui-select-trigger{height:auto;min-height:2.25rem;padding-block:.45rem;white-space:normal}
+.ui-dialog .ui-select-value{overflow-wrap:anywhere}
 .ui-dialog .ui-select-content{max-width:100%}
 table.rows-table td{vertical-align:middle}
 .cell-sub{display:block;color:var(--muted);font-size:.8rem;margin-top:.1rem;overflow-wrap:anywhere}
