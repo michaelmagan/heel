@@ -27,7 +27,7 @@ table.rows-table td{vertical-align:middle}
 .cell-actions form{display:inline;margin:0}
 .agent-name{font-weight:600;color:var(--text);text-decoration:none;font-family:ui-monospace,"Geist Mono",SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem}
 .agent-name:hover{text-decoration:underline}
-.agents-table tr[data-revoked] td{opacity:.7}
+.agents-table tr[data-revoked] .agent-name{color:var(--muted)}
 .agents-empty-icon{background:var(--surface);color:var(--muted)}
 .row-manage{position:relative;display:inline-block;text-align:left}
 .row-manage > summary{list-style:none}
