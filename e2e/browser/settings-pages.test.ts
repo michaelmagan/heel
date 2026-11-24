@@ -299,6 +299,23 @@ describe("tap targets on a touch screen", () => {
 });
 
 describe("menus inside a dialog", () => {
+  it("keeps a long agent name inside the New grant dialog, closed and open", async () => {
+    for (const width of PHONES) {
+      const page = await open("/grants/long-names", width);
+      try {
+        await page.locator('button[aria-controls="grant-dialog"]').click();
+        const panel = page.locator("#grant-dialog .ui-dialog-panel");
+        const sidewaysIn = () => panel.evaluate((el) => el.scrollWidth - el.clientWidth);
+        expect(await sidewaysIn(), `closed at ${String(width)}`).toBe(0);
+        await page.locator("#grant-dialog .ui-select-trigger").first().click();
+        expect(await sidewaysIn(), `open at ${String(width)}`).toBe(0);
+        expect(await clipped(page.locator(".ui-select-content:not([hidden])"))).toEqual([]);
+      } finally {
+        await page.context().close();
+      }
+    }
+  });
+
   it("opens a dialog's last menu where the dialog doesn't cut it off", async () => {
     for (const [path, dialog] of [
       ["/grants/busy", "grant-dialog"],

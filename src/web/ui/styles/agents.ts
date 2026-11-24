@@ -20,6 +20,8 @@ export const AGENTS_CSS = `
 .ui-dialog .grant-form{display:grid;gap:.35rem}
 .ui-dialog .grant-form label{margin-top:.35rem}
 .ui-dialog select{width:100%}
+.ui-dialog .ui-select{display:flex}
+.ui-dialog .ui-select-content{max-width:100%}
 table.rows-table td{vertical-align:middle}
 .cell-sub{display:block;color:var(--muted);font-size:.8rem;margin-top:.1rem;overflow-wrap:anywhere}
 .cell-code{font-size:.82rem;overflow-wrap:anywhere}

@@ -96,7 +96,7 @@ const RULES = `
 .ui-select-trigger:focus-visible{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 35%,transparent)}
 .ui-select-trigger[aria-expanded="true"]{border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 25%,transparent)}
 .ui-select-trigger:disabled{opacity:.5;cursor:not-allowed}
-.ui-select-value{min-width:0}
+.ui-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ui-select-chevron{display:inline-flex;flex:none;color:var(--muted)}
 .ui-select-chevron svg{width:1rem;height:1rem}
 .ui-select-content{position:absolute;left:0;top:calc(100% + .3rem);z-index:60;min-width:100%;width:max-content;max-width:min(22rem,calc(100vw - 2rem));max-height:18rem;overflow-y:auto;padding:.25rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);box-shadow:0 10px 28px -10px rgb(0 0 0 / .3),0 2px 6px -2px rgb(0 0 0 / .08)}
