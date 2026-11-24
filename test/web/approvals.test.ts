@@ -294,14 +294,14 @@ describe("the approval page", () => {
       })
       .run();
     const page = await (await h.fetch(`/approvals/${approvalId}`, { as: owner })).text();
-    expect(page).toContain("The script is paused at this call");
-    expect(page).toContain("Stop the script");
+    expect(page).toContain("The task is waiting for your OK");
+    expect(page).toContain("Cancel the task");
     // A crafted link can't make a parked script look stopped.
     const crafted = await (
       await h.fetch(`/approvals/${approvalId}?script-stopped`, { as: owner })
     ).text();
-    expect(crafted).toContain("Stop the script");
-    expect(crafted).not.toContain("Stopped. The script won");
+    expect(crafted).toContain("Cancel the task");
+    expect(crafted).not.toContain("Cancelled. Nothing after this step will run.");
     // Someone who may not decide the request can't stop its script.
     h.addUser("sam", "member");
     const sam = await h.signIn(await h.enroll("sam"));
@@ -325,8 +325,8 @@ describe("the approval page", () => {
     const after = await (
       await h.fetch(`/approvals/${approvalId}?script-stopped`, { as: owner })
     ).text();
-    expect(after).toContain("Stopped. The script won");
-    expect(after).not.toContain("Stop the script");
+    expect(after).toContain("Cancelled. Nothing after this step will run.");
+    expect(after).not.toContain("Cancel the task");
     // The approval itself is untouched: it's still waiting for a decision.
     expect(h.status(approvalId)).toBe("pending");
   });
@@ -383,7 +383,7 @@ describe("the approval page", () => {
       })
       .run();
     const page = await (await h.fetch(`/approvals/${approvalId}`, { as: owner })).text();
-    expect(page).toContain("approving starts it again at once");
+    expect(page).toContain("keeps running after you approve it");
     expect(page).toContain("Nothing runs until you approve.");
     expect(page).not.toContain("sends the same call again");
 
@@ -395,9 +395,9 @@ describe("the approval page", () => {
     expect(decided).toEqual([approvalId]);
     // Once approved, the page doesn't say the script waits for the owner, or for the agent.
     const afterPage = await (await h.fetch(`/approvals/${approvalId}`, { as: owner })).text();
-    expect(afterPage).toContain("heel is starting the script again");
+    expect(afterPage).toContain("The task goes on from this step");
     expect(afterPage).not.toContain("waiting for you");
-    expect(afterPage).toContain("when the script carries on from this call");
+    expect(afterPage).toContain("when the task goes on from this step");
     expect(afterPage).not.toContain("re-sends the identical call");
 
     const agentsPage = await (await h.fetch("/agents", { as: owner })).text();

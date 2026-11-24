@@ -1,7 +1,9 @@
 import type { RuleRef, Surface } from "../../core/call.ts";
 import type { ApprovalHints, HintTone } from "../../core/hints.ts";
 import type { ApprovalScript } from "../../gateway/pipeline/ports.ts";
+import { toolLabel } from "../../requests/actions.ts";
 import type { ApprovalOrigin, ApprovalStatus } from "../../store/schema.ts";
+import { actionBar, approvalShell, type Dock } from "./approval-shell.ts";
 import { type CeremonyCallback, ceremonyButton } from "./ceremony.ts";
 import {
   formatArguments,
@@ -119,6 +121,8 @@ export interface ApprovalRequestProps {
   stopped?: boolean;
   /** The parked script is a background one: approving starts it again at once (C6). */
   background?: boolean;
+  /** Phones: pin the action bar to the bottom of the screen, or keep it in the panel. */
+  dock?: Dock;
 }
 
 /** What remembered folds are keyed by: the action, or `provider:tool` without one. */
@@ -443,60 +447,54 @@ function scriptView(
 ): Html | "" {
   const script = request.script;
   if (script === null) return "";
-  // A crafted link can't claim a stop: the notice shows only once nothing is parked.
+  const who = request.client === null ? request.agent : clientLabel(request.client);
+  const step = script.before.length + 1;
+  // A crafted link can't claim a cancel: the notice shows only once nothing is waiting.
   const stoppedNotice = stopped
-    ? notice(
-        "info",
-        html`<p>Stopped. The script won't carry on; ${request.agent} would have to start again.</p>`,
-      )
+    ? notice("info", html`<p>Cancelled. Nothing after this step will run.</p>`)
     : "";
   const decided = request.status !== "pending";
   const waiting =
     parked === null
       ? stoppedNotice
       : decided && background
-        ? html`<p>Approved: heel is starting the script again from this call.</p>`
+        ? html`<p>Approved. The task goes on from this step.</p>`
         : html`<div class="script-stop">
-          <p>
-            ${
-              decided
-                ? html`The script is still paused at this call, until ${request.agent} resumes it.
-                  Stopping it means it never carries on.`
-                : html`The script is paused at this call, waiting for you. Stopping it means it
-                  never carries on, whatever you decide here.`
-            }
-          </p>
+          <p>${decided ? "The task is waiting for it to go on." : "The task is waiting for your OK."}</p>
           ${
             background
-              ? html`<p><strong>It's a background script: approving starts it again at once.</strong>
-                  This call runs, then the rest of the script, without ${request.agent} asking
-                  again. Denying ends it.</p>`
+              ? html`<p>
+                  <strong>This task keeps running after you approve it,</strong> without asking
+                  again before each step.
+                </p>`
               : ""
           }
-          ${postForm(parked.stop, {}, html`<button type="submit" class="${btn("outline")}">Stop the script</button>`)}
+          ${postForm(parked.stop, {}, html`<button type="submit" class="${btn("outline")}">Cancel the task</button>`)}
+          <p class="muted">Nothing after this step will run.</p>
         </div>`;
   const before =
     script.before.length === 0
-      ? html`<p class="muted">This is the script's first call to your accounts.</p>`
-      : html`<p>Before this call, the script made ${script.before.length === 1 ? "1 call" : `${script.before.length} calls`}:</p>
+      ? ""
+      : html`<p class="script-done-label">Steps already done:</p>
           <ol class="script-calls">
             ${script.before.map(
               (c) =>
-                html`<li><span class="mono">${c.tool}</span> on <span class="mono">${c.account}</span> <span class="muted">(${c.decision})</span></li>`,
+                html`<li>${toolLabel(c.tool)} on <span class="mono">${c.account}</span> <span class="muted">(${DONE_WORDS[c.decision] ?? c.decision})</span></li>`,
             )}
           </ol>`;
-  return html`<section class="script ap-script" aria-label="The script this call comes from">
-    <h2 class="section-title">From a script</h2>
+  return html`<section class="script ap-script" aria-label="The longer task this step belongs to">
+    <h2 class="section-title">Part of a longer task</h2>
     <p>
-      ${request.agent} sent this call from a script. If you approve, the script carries on from
-      here, and every later call in it is checked by your rules on its own.
+      ${who} is doing several steps. This is step ${String(step)}:
+      ${headline(request).action}.
     </p>
     ${before}
     ${waiting}
     <details class="ap-fold">
-      <summary><span class="fold-label">The script (${request.agent}'s own code; heel didn't check what it says)</span>${CHEV}</summary>
+      <summary><span class="fold-label">See the code ${who} wrote</span>${CHEV}</summary>
+      <p class="muted">heel didn't check what it says. It checks each step on its own.</p>
       <pre class="mono">${script.code}</pre>
-      ${script.truncated ? html`<p class="muted">Cut here: the script is longer than heel keeps.</p>` : ""}
+      ${script.truncated ? html`<p class="muted">Cut here: the code is longer than heel keeps.</p>` : ""}
     </details>
   </section>`;
 }
@@ -529,53 +527,50 @@ function hintsView(request: ApprovalRequestView): Html | "" {
   </section>`;
 }
 
-function statusNotice(request: ApprovalRequestView, now: Date): Html {
-  const decided = request.decision;
+/** Earlier steps' decisions, in words. */
+const DONE_WORDS: Readonly<Record<string, string>> = {
+  allow: "allowed",
+  approved: "you approved",
+  standing: "allowed by a standing approval",
+  grant: "allowed by a grant",
+  ask: "asked you",
+  deny: "denied",
+};
+
+/**
+ * The decision, as one short line (note 16). Who decided, when it lapses
+ * and what a re-send does are in Details (`afterwards`).
+ */
+function statusNotice(request: ApprovalRequestView): Html {
   switch (request.status) {
     case "pending":
-      // The header carries the expiry and the decision bar says what approving does.
       return html``;
     case "approved":
-      return stateAlert(
-        "ok",
-        "check",
-        html`<p>
-          Approved${decided ? html` by ${decided.by} at ${time(decided.at)}` : ""}. It runs once
-          ${
-            request.script === null
-              ? "when the agent re-sends the identical call"
-              : "when the script carries on from this call"
-          }, after the rules are checked again. Unused, it expires ${time(request.expiresAt)}
-          (${formatRelative(request.expiresAt, now)}).
-        </p>`,
-      );
+      return stateAlert("ok", "check", html`<p>Approved. It will run once.</p>`);
     case "denied":
-      return stateAlert(
-        "error",
-        "x",
-        html`<p>
-          Denied${decided ? html` by ${decided.by} at ${time(decided.at)}` : ""}. Re-sends of
-          this call return “denied” until ${time(request.expiresAt)}.
-        </p>`,
-      );
+      return stateAlert("error", "x", html`<p>Denied.</p>`);
     case "expired":
-      return stateAlert(
-        "warn",
-        "clock",
-        html`<p>
-          Expired ${time(request.expiresAt)}. It can no longer be decided; the agent's next
-          identical call starts a new request.
-        </p>`,
-      );
+      return stateAlert("warn", "clock", html`<p>Expired. Nothing ran.</p>`);
     case "executed":
-      return stateAlert(
-        "info",
-        "check",
-        html`<p>
-          Ran once${request.executedAt ? html` at ${time(request.executedAt)}` : ""}. Another
-          identical call is evaluated as a new call.
-        </p>`,
-      );
+      return stateAlert("info", "check", html`<p>Done. It ran once.</p>`);
+  }
+}
+
+/** What happens next for a decided request, for Details: the words the banner leaves out. */
+function afterwards(request: ApprovalRequestView): string | null {
+  switch (request.status) {
+    case "pending":
+      return null;
+    case "approved":
+      return request.script === null
+        ? "It runs once, when the agent sends the same call again and your rules still ask about it. Unused, it lapses at the time below."
+        : "It runs once, when the task goes on from this step and your rules still ask about it. Unused, it lapses at the time below.";
+    case "denied":
+      return "If the agent sends the same call again before the time below, heel denies it without asking you.";
+    case "expired":
+      return "It can't be decided now. If the agent sends the same call again, you get a new request.";
+    case "executed":
+      return "If the agent sends the same call again, your rules decide it as a new call.";
   }
 }
 
@@ -722,8 +717,8 @@ function decisionControls(
         : html`<p class="ap-risk" role="note"><span class="ap-risk-icon">${trusted(ICONS.alert)}</span><span><span class="ap-risk-word">Check:</span> ${risk}</span></p>`
     }
     ${expired ? "" : checkHints(request)}
-    <div class="ap-bar">
-      ${ceremonyButton({
+    ${actionBar({
+      yes: ceremonyButton({
         callback: onDecide,
         intent: "approve-once",
         label: "Approve once",
@@ -731,8 +726,8 @@ function decisionControls(
         binding,
         disabled: approveLocked,
         describedBy: helpId,
-      })}
-      ${ceremonyButton({
+      }),
+      no: ceremonyButton({
         callback: onDecide,
         intent: "deny",
         label: "Deny",
@@ -740,11 +735,11 @@ function decisionControls(
         binding,
         disabled: expired,
         describedBy: helpId,
-      })}
-    </div>
-    <p id="${helpId}" class="visually-hidden">
-      Your passkey confirms every decision. Nothing runs until you approve.
-    </p>
+      }),
+      helpId,
+      help: "Your passkey confirms every decision. Nothing runs until you approve.",
+      dock: !expired,
+    })}
     ${request.origin === "org" ? standingOptions(request, fieldsetId, approveLocked) : ""}
   </section>`;
   const longer =
@@ -796,6 +791,7 @@ export function approvalRequest(props: ApprovalRequestProps): Html {
           ? httpView(request.http, `http-${request.id}`)
           : argumentsView(request, `what-${request.id}`);
   const pending = request.status === "pending";
+  const after = afterwards(request);
   const { decide, longer } = decisionControls(request, props.pause, props.onDecide);
   const details = fold(
     folds,
@@ -807,7 +803,6 @@ export function approvalRequest(props: ApprovalRequestProps): Html {
         <span class="ap-agent">${request.agent}</span>
         ${viaView(request)}
         <span class="muted">on ${request.account}</span>
-        <span class="muted">${formatRelative(request.createdAt, props.now)}</span>
       </div>
       <h3 class="ap-sub">Rule and call details</h3>
       <dl class="facts">
@@ -830,8 +825,21 @@ export function approvalRequest(props: ApprovalRequestProps): Html {
         <dd>${countsView(request)}</dd>
         <dt>Requested</dt>
         <dd>${time(request.createdAt)}</dd>
-        <dt>Expires</dt>
-        <dd>${time(request.expiresAt)} (${formatRelative(request.expiresAt, props.now)})</dd>
+        ${
+          request.decision === null
+            ? ""
+            : html`<dt>Decided</dt>
+              <dd>by ${request.decision.by}, ${time(request.decision.at)}</dd>`
+        }
+        ${
+          request.executedAt === null
+            ? ""
+            : html`<dt>Ran</dt>
+              <dd>${time(request.executedAt)}</dd>`
+        }
+        <dt>${request.status === "pending" || request.status === "approved" ? "Expires" : request.status === "denied" ? "Denied until" : "Expired"}</dt>
+        <dd>${time(request.expiresAt)}</dd>
+        ${after === null ? "" : html`<dt>Next</dt><dd>${after}</dd>`}
         <dt>Request</dt>
         <dd class="mono">${request.id}</dd>
       </dl>
@@ -850,31 +858,24 @@ export function approvalRequest(props: ApprovalRequestProps): Html {
     </div>`,
     "ap-details",
   );
-  return html`<article class="ap" data-heel-fold-kind="${foldKind(request)}">
-    <nav class="ap-crumbs" aria-label="Breadcrumb">
-      <a href="/approvals">${trusted(ICONS.back)}Approvals</a>
-      <span class="muted" aria-hidden="true">/</span>
-      <span aria-current="page">Request</span>
-    </nav>
-    <div class="ap-layout">
-      <h1 class="ap-title">
-        ${said.agent} wants to <mark>${said.action}</mark> ${said.preposition}
-        <mark>${said.place}</mark>${said.rest}
-      </h1>
-      <aside class="ap-side" aria-label="Decision">
-        <p class="ap-status">
-          ${approvalStatusBadge(request.status)}
-          <span class="muted">${pending ? html`expires ${formatRelative(request.expiresAt, props.now)}` : html`requested ${formatRelative(request.createdAt, props.now)}`}</span>
-        </p>
-        ${reasonView(request)}
-        ${statusNotice(request, props.now)}
-        ${decide}
-        <div class="ap-folds">${longer}${details}</div>
-      </aside>
-      <div class="ap-main">
-        ${view}
-        ${scriptView(request, props.parked ?? null, props.stopped === true, props.background === true)}
-      </div>
-    </div>
-  </article>`;
+  const when = pending
+    ? html`expires ${formatRelative(request.expiresAt, props.now)}`
+    : request.decision !== null
+      ? html`by ${request.decision.by}, ${formatRelative(request.decision.at, props.now)}`
+      : html`requested ${formatRelative(request.createdAt, props.now)}`;
+  return approvalShell({
+    kind: "call",
+    crumb: "Request",
+    foldKind: foldKind(request),
+    dock: props.dock ?? "inline",
+    title: html`${said.agent} wants to <mark>${said.action}</mark> ${said.preposition}
+      <mark>${said.place}</mark>${said.rest}`,
+    status: html`${approvalStatusBadge(request.status)} <span class="muted">${when}</span>`,
+    side: html`${reasonView(request)}
+      ${statusNotice(request)}
+      ${decide}
+      <div class="ap-folds">${longer}${details}</div>`,
+    main: html`${view}
+      ${scriptView(request, props.parked ?? null, props.stopped === true, props.background === true)}`,
+  });
 }

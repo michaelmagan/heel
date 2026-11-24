@@ -90,8 +90,8 @@ describe("ApprovalRequest", () => {
     });
     const section = doc.querySelector("section.script");
     if (section === null) throw new Error("no script section");
-    expect(text(section)).toContain("From a script");
-    expect(text(section)).toContain("search on gmail-work (allow)");
+    expect(text(section)).toContain("Part of a longer task");
+    expect(text(section)).toContain("search on gmail-work (allowed)");
     expect(text(section)).toContain("heel didn't check what it says");
     expect(text(section)).toContain("<script>alert(1)</script>");
     expect(section.querySelector("script")).toBeNull();
@@ -388,9 +388,9 @@ describe("ApprovalRequest", () => {
   });
 
   it.each([
-    ["approved", APPROVED_REQUEST, "runs once when the agent re-sends the identical call"],
-    ["denied", DENIED_REQUEST, "Re-sends of this call return “denied”"],
-    ["executed", EXECUTED_REQUEST, "Ran once"],
+    ["approved", APPROVED_REQUEST, "Approved. It will run once."],
+    ["denied", DENIED_REQUEST, "heel denies it without asking you"],
+    ["executed", EXECUTED_REQUEST, "Done. It ran once."],
   ] as const)(
     "a decided (%s) request explains itself and has no decision controls",
     (_s, request, note) => {
