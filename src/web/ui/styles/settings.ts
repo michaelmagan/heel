@@ -71,4 +71,13 @@ button.seg-item:hover{color:var(--text);background:color-mix(in srgb,var(--bg) 6
 .seg-note{display:block;margin-top:.3rem;font-size:.8rem}
 .mode-switch{white-space:nowrap}
 .mode-means{display:block;margin-top:.3rem;font-size:.84rem}
+@media (max-width:36rem){
+  table.modes-table{min-width:0}
+  table.modes-table thead{display:none}
+  table.modes-table,table.modes-table tbody{display:block}
+  table.modes-table tr{display:grid;grid-template-columns:minmax(0,1fr);gap:.5rem;padding:.75rem .85rem;border-bottom:1px solid var(--line)}
+  table.modes-table tr:last-child{border-bottom:0}
+  table.modes-table tr > *{padding:0!important;border:0;height:auto!important;white-space:normal!important;overflow-wrap:anywhere}
+  table.modes-table .badge{white-space:normal}
+}
 `;

@@ -146,6 +146,24 @@ describe("People", () => {
   });
 });
 
+describe("Modes", () => {
+  it("shows each person's mode and what applies without a sideways scroll on a phone", async () => {
+    for (const path of ["/modes/mixed", "/modes/watch-fallback"]) {
+      for (const width of PHONES) {
+        const page = await open(path, width);
+        try {
+          const extra = await page
+            .locator(".table-scroll")
+            .evaluate((el) => el.scrollWidth - el.clientWidth);
+          expect(extra, `${path} at ${String(width)}`).toBe(0);
+        } finally {
+          await page.context().close();
+        }
+      }
+    }
+  });
+});
+
 describe("menus inside a dialog", () => {
   it("opens a dialog's last menu where the dialog doesn't cut it off", async () => {
     for (const [path, dialog] of [
