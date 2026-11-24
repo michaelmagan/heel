@@ -875,7 +875,8 @@ export function approvalRequest(props: ApprovalRequestProps): Html {
       ${statusNotice(request)}
       ${decide}
       <div class="ap-folds">${longer}${details}</div>`,
-    main: html`${view}
-      ${scriptView(request, props.parked ?? null, props.stopped === true, props.background === true)}`,
+    // A step of a longer task says so first (note 15), then what this step does.
+    main: html`${scriptView(request, props.parked ?? null, props.stopped === true, props.background === true)}
+      ${view}`,
   });
 }
